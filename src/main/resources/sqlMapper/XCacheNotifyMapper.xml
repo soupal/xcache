@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.xquant.platform.component.xcache.dao.XCacheNotifyMapper">
+
+	<insert id="insert" parameterType="String">
+		INSERT INTO TTRD_XCC_CACHE_NOTIFY_SNAP (COMMAND, CACHENAME, CACHEKEY,FUNNUM, CACHEOBJ,CREATETIME)
+		VALUES ( #{command},
+		#{cacheName},#{cacheKey},
+		#{funNum}, #{cacheObj},
+		<if test="'${dialect}'!='mysql'">
+			to_char(systimestamp,'yyyy-mm-dd hh24:mi:ss ff3')
+		</if>
+		<if test="'${dialect}'=='mysql'">
+			REPLACE(CURRENT_TIMESTAMP(3),'.',' ')
+		</if>
+		)
+	</insert>
+
+	<delete id="deleteAll">
+		DELETE FROM TTRD_XCC_CACHE_NOTIFY_SNAP
+	</delete>
+
+	<select id="countByKey" parameterType="String" resultType="int">
+		SELECT COUNT(*) FROM TTRD_XCC_CACHE_NOTIFY_SNAP WHERE CACHEKEY = #{cacheKey} AND COMMAND =
+		#{command}
+	</select>
+
+</mapper>
