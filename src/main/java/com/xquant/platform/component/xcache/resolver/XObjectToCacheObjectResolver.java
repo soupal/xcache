@@ -1,6 +1,7 @@
 package com.xquant.platform.component.xcache.resolver;
 
 import java.lang.reflect.Method;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,6 +14,7 @@ import com.xquant.platform.component.xcache.config.XCacheConfig;
 import com.xquant.platform.component.xcache.dto.XCacheNotifyObject;
 import com.xquant.platform.component.xcache.dto.XCacheObjectMetaData;
 import com.xquant.platform.component.xcache.dto.XCacheSqlMetaData;
+import com.xquant.platform.component.xcache.enums.XCacheNotifyCommand;
 import com.xquant.platform.component.xcache.parser.XCachePlaceHolderParser;
 import com.xquant.platform.component.xcache.parser.XCacheSqlMetaDataParser;
 
@@ -27,6 +29,8 @@ public class XObjectToCacheObjectResolver {
 
 	private static Logger logger = LoggerFactory.getLogger(XObjectToCacheObjectResolver.class);
 
+	private static final EnumSet<XCacheNotifyCommand> NO_NEED_QUERY_ENUM_SET = EnumSet.of(XCacheNotifyCommand.DELETE, XCacheNotifyCommand.UPDATE_ALL);
+	
 	public static void resolveCacheKeyAndProperties(XCacheNotifyObject xCacheNotifyObject, Object obj) {
 		XCacheObjectMetaData cacheObjectMetaData = xCacheNotifyObject.getxCacheObjectMetaData();
 		int initialCapacity = cacheObjectMetaData.getNumOfCacheKey() + cacheObjectMetaData.getNumOfCacheProperty();
@@ -40,6 +44,9 @@ public class XObjectToCacheObjectResolver {
 		String cacheKey = XCachePlaceHolderParser.parse(cacheKeyExpression, cacheKeyAndProValueMap);
 		xCacheNotifyObject.setCacheKey(cacheKey);
 		// 解析sqlMetaData
+		if(NO_NEED_QUERY_ENUM_SET.contains(xCacheNotifyObject.getNotifyCommand())) {
+			return;
+		}
 		String sql = xCacheNotifyObject.getxCacheObjectMetaData().getSql();
 		if (StringUtils.isNotBlank(sql)) {
 			XCacheSqlMetaData cacheSqlMetaData = XCacheSqlMetaDataParser.parse(sql, cacheKeyAndProValueMap);

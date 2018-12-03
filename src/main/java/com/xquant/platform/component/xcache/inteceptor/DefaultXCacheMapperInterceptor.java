@@ -30,12 +30,12 @@ public class DefaultXCacheMapperInterceptor implements XCacheMapperInterceptor {
 			synchronized (cls) {
 				cacheObjectMetaData = XCacheObjectMetaDataRegistry.getCacheObjectMetaData(cls);
 				if (cacheObjectMetaData == null) {
-					logger.info("start processing cache metadata for class []", cls.getName());
+					logger.info("start processing cache metadata for class {}", cls.getName());
 					long startTime = System.currentTimeMillis();
 					cacheObjectMetaData = XCacheObjectMetaDataResolver.process4MetaData(cls);
 					XCacheObjectMetaDataRegistry.register(cls, cacheObjectMetaData);
 					long endTime = System.currentTimeMillis();
-					logger.info("end processing cache metadata for class [],used time [] ms", cls.getName(), endTime - startTime);
+					logger.info("end processing cache metadata for class {},used time {} ms", cls.getName(), endTime - startTime);
 				}
 			}
 		}

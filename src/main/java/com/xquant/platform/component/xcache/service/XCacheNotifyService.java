@@ -25,7 +25,7 @@ public interface XCacheNotifyService {
 	 * @param funNum
 	 *            功能号
 	 */
-	void notify(XCacheNotifyCommand command, String cacheName, Map<String, Object> cacheMap, int funNum);
+	void notify(XCacheNotifyCommand command, String cacheKey, String cacheName, Map<String, Object> cacheMap, int funNum);
 
 	/**
 	 * 缓存通知
@@ -39,5 +39,5 @@ public interface XCacheNotifyService {
 	 * @param funNum
 	 *            功能号
 	 */
-	void notify(XCacheNotifyCommand command, String cacheName, Object cacheObj, int funNum);
+	void notify(XCacheNotifyCommand command, String cacheKey, String cacheName, Object cacheObj, int funNum);
 }

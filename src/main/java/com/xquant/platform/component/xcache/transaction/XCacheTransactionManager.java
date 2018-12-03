@@ -2,10 +2,11 @@ package com.xquant.platform.component.xcache.transaction;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.xquant.platform.component.xcache.dto.XCacheNotifyObject;
 import com.xquant.platform.component.xcache.resource.XCacheResourceSynchronizationManager;
@@ -21,6 +22,8 @@ import com.xquant.platform.component.xcache.service.XCacheNotifyService;
 public class XCacheTransactionManager extends DataSourceTransactionManager {
 
 	private static final long serialVersionUID = 2788392542508818566L;
+
+	private static final Logger logger = LoggerFactory.getLogger(XCacheTransactionManager.class);
 
 	@Autowired(required = false)
 	private XCacheNotifyService xCacheNotifyService;
@@ -44,12 +47,16 @@ public class XCacheTransactionManager extends DataSourceTransactionManager {
 		List<XCacheNotifyObject> allCacheNotifyObjects = XCacheResourceSynchronizationManager.getAllCacheNotifyObjects();
 		if (allCacheNotifyObjects.size() >= 1 && xCacheNotifyService != null) {
 			for (XCacheNotifyObject notifyObject : allCacheNotifyObjects) {
-				xCacheNotifyService.notify(notifyObject.getNotifyCommand(), notifyObject.getxCacheObjectMetaData().getCacheName(),
-						notifyObject.getMapCache(), notifyObject.getxCacheObjectMetaData().getFunNum());
+				xCacheNotifyService.notify(notifyObject.getNotifyCommand(), notifyObject.getCacheKey(),
+						notifyObject.getxCacheObjectMetaData().getCacheName(), notifyObject.getMapCache(),
+						notifyObject.getxCacheObjectMetaData().getFunNum());
 			}
 		}
 
 		super.doCommit(status);
+
+		logger.trace(
+				" \r\n\r\n =====================notify service=================\r\n =                      事务提交                                                                    =\r\n ====================================================\r\n");
 	}
 
 	@Override

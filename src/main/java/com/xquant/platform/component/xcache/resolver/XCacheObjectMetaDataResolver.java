@@ -9,6 +9,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.test.annotation.ProfileValueSourceConfiguration;
 import org.springframework.util.Assert;
 
 import com.xquant.platform.component.xcache.annotation.XCacheKey;
@@ -38,7 +39,11 @@ public class XCacheObjectMetaDataResolver {
 	 * @return
 	 */
 	public static XCacheObjectMetaData process4MetaData(Class<?> cls) {
-		XCacheObject xCacheObject = cls.getAnnotation(XCacheObject.class);
+		Class<XCacheObject> annotationType = XCacheObject.class;
+		XCacheObject xCacheObject = cls.getAnnotation(annotationType);
+		
+//		 XCacheObject xCacheObject = cls.getAnnotation(XCacheObject.class);
+		
 		beforeCheck(xCacheObject, cls);
 		Method[] methods = cls.getMethods();
 		int mapSize = Math.max((int) (methods.length / XCacheConfig.DEFAULT_LOAD_FACTOR), 16);

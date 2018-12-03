@@ -6,7 +6,6 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.ibatis.jdbc.SqlRunner;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +14,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.Assert;
 
 import com.xquant.platform.component.xcache.dto.XCacheNotifyObject;
 import com.xquant.platform.component.xcache.resource.XCacheObjectCreateApplicationEvent;
@@ -39,20 +39,14 @@ public class XCacheObjectCreateEventListener implements ApplicationListener<XCac
 	@Autowired(required = true)
 	private JdbcTemplate jdbcTemplate;
 
-	@Autowired(required = true)
-	private DataSource dataSource;
-
 	@Autowired(required = false)
 	private XCacheNotifyService xCacheNotifyService;
-
-	@Autowired(required = true)
-	private SqlSessionTemplate sqlSessionTemplate;
 
 	@Override
 	public void onApplicationEvent(XCacheObjectCreateApplicationEvent event) {
 		XCacheNotifyObject notifyObject = event.getxCacheNotifyObject();
 		// 执行数据库查询
-		if (notifyObject.getxCacheSqlMetaData() != null) {
+		if (needSqlQuery(notifyObject)) {
 			fillNotifyObjectWithCache(notifyObject);
 		}
 		if (TransactionSynchronizationManager.isActualTransactionActive()) {
@@ -61,19 +55,34 @@ public class XCacheObjectCreateEventListener implements ApplicationListener<XCac
 		} else {
 			// 如果当前无事务 则直接进行缓存通知
 			if (xCacheNotifyService != null) {
-				xCacheNotifyService.notify(notifyObject.getNotifyCommand(), "xcc_" + notifyObject.getCacheKey(), notifyObject.getMapCache(),
+				xCacheNotifyService.notify(notifyObject.getNotifyCommand(), notifyObject.getCacheKey(),
+						notifyObject.getxCacheObjectMetaData().getCacheName(), notifyObject.getMapCache(),
 						notifyObject.getxCacheObjectMetaData().getFunNum());
 			}
 		}
+	}
+
+	private boolean needSqlQuery(XCacheNotifyObject notifyObject) {
+		if (notifyObject.getxCacheSqlMetaData() != null) {
+			Assert.notNull(notifyObject.getxCacheSqlMetaData().getSql(), "sql can not be null");
+			Assert.notNull(notifyObject.getxCacheSqlMetaData().getArgs(), "args can not be null");
+			return true;
+		}
+		return false;
 	}
 
 	private void fillNotifyObjectWithCache(XCacheNotifyObject notifyObject) {
 		String sql = notifyObject.getxCacheSqlMetaData().getSql();
 		Object[] args = notifyObject.getxCacheSqlMetaData().getArgs();
 		int[] argTypes = notifyObject.getxCacheSqlMetaData().getArgTypes();
-		List<Map<String, Object>> queryForList = jdbcTemplate.queryForList(sql, args, argTypes);
-		if(CollectionUtils.isEmpty(queryForList)) {
-			throw new RuntimeException(String.format("根据主键查询[%s]结果为空?参数为[%s]", sql, args));	
+		List<Map<String, Object>> queryForList = null;
+		if (argTypes != null) {
+			queryForList = jdbcTemplate.queryForList(sql, args, argTypes);
+		} else {
+			queryForList = jdbcTemplate.queryForList(sql, args);
+		}
+		if (CollectionUtils.isEmpty(queryForList)) {
+			throw new RuntimeException(String.format("根据主键查询[%s]结果为空?参数为[%s]", sql, args));
 		}
 		if (queryForList.size() > 1) {
 			throw new RuntimeException(String.format("根据主键查询[%s]结果数据为多条?参数为[%s]", sql, args));
